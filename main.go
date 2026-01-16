@@ -6,10 +6,24 @@ import (
 	"os"
 )
 
+type config struct {
+	previous string
+	next     string
+}
+
+func (config config) setNext(next string) {
+	config.next = next
+}
+
+func (config config) setPrevious(previous string) {
+	config.previous = previous
+}
+
 type cliCommand struct {
 	name        string
 	description string
 	callback    func() error
+	config      config
 }
 
 var registry = map[string]cliCommand{}
@@ -26,6 +40,24 @@ func main() {
 		description: "explain the commands you can use to interact with the Pokedex",
 		callback:    commandHelp,
 	}
+	registry["map"] = cliCommand{
+		name:        "map",
+		description: "gets a list of the next 20 location areas present in the Pokemons world",
+		callback:    commandMap,
+		config: config{
+			next:     "",
+			previous: "",
+		},
+	}
+	registry["mapb"] = cliCommand{
+		name:        "mapb",
+		description: "gets a list of the previous 20 location areas present in the Pokemon world",
+		callback:    commandMapBack,
+		config: config{
+			next:     "",
+			previous: "",
+		},
+	}
 
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
@@ -37,7 +69,10 @@ func main() {
 		if !ok {
 			fmt.Println("Unknown command")
 		} else {
-			command.callback()
+			err := command.callback()
+			if err != nil {
+				fmt.Printf("Error: %v\n", err)
+			}
 		}
 	}
 }

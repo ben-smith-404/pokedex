@@ -6,24 +6,15 @@ import (
 	"os"
 )
 
-type config struct {
+type Config struct {
 	previous string
 	next     string
-}
-
-func (config config) setNext(next string) {
-	config.next = next
-}
-
-func (config config) setPrevious(previous string) {
-	config.previous = previous
 }
 
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
-	config      config
+	callback    func(config *Config) error
 }
 
 var registry = map[string]cliCommand{}
@@ -44,19 +35,16 @@ func main() {
 		name:        "map",
 		description: "gets a list of the next 20 location areas present in the Pokemons world",
 		callback:    commandMap,
-		config: config{
-			next:     "",
-			previous: "",
-		},
 	}
 	registry["mapb"] = cliCommand{
 		name:        "mapb",
 		description: "gets a list of the previous 20 location areas present in the Pokemon world",
 		callback:    commandMapBack,
-		config: config{
-			next:     "",
-			previous: "",
-		},
+	}
+
+	var config = Config{
+		next:     "",
+		previous: "",
 	}
 
 	scanner := bufio.NewScanner(os.Stdin)
@@ -69,7 +57,7 @@ func main() {
 		if !ok {
 			fmt.Println("Unknown command")
 		} else {
-			err := command.callback()
+			err := command.callback(&config)
 			if err != nil {
 				fmt.Printf("Error: %v\n", err)
 			}
@@ -77,13 +65,13 @@ func main() {
 	}
 }
 
-func commandExit() error {
+func commandExit(config *Config) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	defer os.Exit(0)
 	return nil
 }
 
-func commandHelp() error {
+func commandHelp(config *Config) error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:")
 	fmt.Println()

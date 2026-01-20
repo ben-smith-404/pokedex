@@ -61,35 +61,38 @@ func getLocationAreas(url string) (LocationAreasResponse, error) {
 
 const baseURL = "https://pokeapi.co/api/v2/"
 
-func commandMap() error {
-	url := baseURL + "location-area/"
-	if registry["map"].config.next != "" {
-		url = registry["map"].config.next
+func commandMap(config *Config) error {
+	var url string
+	if config.next == "" {
+		url = baseURL + "location-area/"
+	} else {
+		url = config.next
 	}
-	fmt.Println(registry)
 	locationAreas, err := getLocationAreas(url)
 	if err != nil {
 		return err
 	}
-	registry["map"].config.setNext(locationAreas.Next)
-	registry["map"].config.setPrevious(locationAreas.Previous)
+	config.next = locationAreas.Next
+	config.previous = locationAreas.Previous
 	for _, locationArea := range locationAreas.Results {
 		fmt.Println(locationArea.Name)
 	}
 	return nil
 }
 
-func commandMapBack() error {
-	url := registry["map"].config.previous
-	if url == "" {
+func commandMapBack(config *Config) error {
+	var url string
+	if config.previous == "" {
 		return fmt.Errorf("you're on the first page")
+	} else {
+		url = config.previous
 	}
 	locationAreas, err := getLocationAreas(url)
 	if err != nil {
 		return err
 	}
-	registry["map"].config.setNext(locationAreas.Next)
-	registry["map"].config.setPrevious(locationAreas.Previous)
+	config.next = locationAreas.Next
+	config.previous = locationAreas.Previous
 	for _, locationArea := range locationAreas.Results {
 		fmt.Println(locationArea.Name)
 	}

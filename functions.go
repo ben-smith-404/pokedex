@@ -159,8 +159,14 @@ func getPokemon(url string) (Pokemon, error) {
 	return pokemon, nil
 }
 
-var pokedex = map[string]Pokemon{}
-
 func addToPokedex(pokemon string, pokemonData Pokemon) {
 	pokedex[pokemon] = pokemonData
+}
+
+func getFromPokedex(name string) (Pokemon, error) {
+	pokemon, exists := pokedex[name]
+	if !exists {
+		return pokemon, fmt.Errorf("you have not caught that pokemon")
+	}
+	return pokemon, nil
 }

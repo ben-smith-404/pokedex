@@ -40,7 +40,7 @@ func (cache Cache) reapLoop(interval time.Duration) {
 	for tick := range ticker.C {
 		cache.mu.Lock()
 		for key, entry := range cache.cacheEntries {
-			if entry.createdAt.Sub(tick) > interval {
+			if entry.createdAt.Sub(tick)*-1 > interval {
 				delete(cache.cacheEntries, key)
 			}
 		}

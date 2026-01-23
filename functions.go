@@ -20,6 +20,10 @@ func cleanInput(text string) []string {
 }
 
 func getDataFromAPI(url string) ([]byte, error) {
+	data, ok := cache.Get(url)
+	if ok {
+		return data, nil
+	}
 	res, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -32,6 +36,7 @@ func getDataFromAPI(url string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	cache.Add(url, body)
 	return body, nil
 }
 
@@ -59,42 +64,68 @@ func getLocationAreas(url string) (LocationAreasResponse, error) {
 	return locationAreas, nil
 }
 
-const baseURL = "https://pokeapi.co/api/v2/"
-
-func commandMap(config *Config) error {
-	var url string
-	if config.next == "" {
-		url = baseURL + "location-area/"
-	} else {
-		url = config.next
-	}
-	locationAreas, err := getLocationAreas(url)
-	if err != nil {
-		return err
-	}
-	config.next = locationAreas.Next
-	config.previous = locationAreas.Previous
-	for _, locationArea := range locationAreas.Results {
-		fmt.Println(locationArea.Name)
-	}
-	return nil
+type LocationAreaResponse struct {
+	EncounterMethodRates []struct {
+		EncounterMethod struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"encounter_method"`
+		VersionDetails []struct {
+			Rate    int `json:"rate"`
+			Version struct {
+				Name string `json:"name"`
+				URL  string `json:"url"`
+			} `json:"version"`
+		} `json:"version_details"`
+	} `json:"encounter_method_rates"`
+	GameIndex int `json:"game_index"`
+	ID        int `json:"id"`
+	Location  struct {
+		Name string `json:"name"`
+		URL  string `json:"url"`
+	} `json:"location"`
+	Name  string `json:"name"`
+	Names []struct {
+		Language struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"language"`
+		Name string `json:"name"`
+	} `json:"names"`
+	PokemonEncounters []struct {
+		Pokemon struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"pokemon"`
+		VersionDetails []struct {
+			EncounterDetails []struct {
+				Chance          int           `json:"chance"`
+				ConditionValues []interface{} `json:"condition_values"`
+				MaxLevel        int           `json:"max_level"`
+				Method          struct {
+					Name string `json:"name"`
+					URL  string `json:"url"`
+				} `json:"method"`
+				MinLevel int `json:"min_level"`
+			} `json:"encounter_details"`
+			MaxChance int `json:"max_chance"`
+			Version   struct {
+				Name string `json:"name"`
+				URL  string `json:"url"`
+			} `json:"version"`
+		} `json:"version_details"`
+	} `json:"pokemon_encounters"`
 }
 
-func commandMapBack(config *Config) error {
-	var url string
-	if config.previous == "" {
-		return fmt.Errorf("you're on the first page")
-	} else {
-		url = config.previous
-	}
-	locationAreas, err := getLocationAreas(url)
+func getLocationArea(url string) (LocationAreaResponse, error) {
+	var locationArea LocationAreaResponse
+	apiData, err := getDataFromAPI(url)
 	if err != nil {
-		return err
+		return locationArea, err
 	}
-	config.next = locationAreas.Next
-	config.previous = locationAreas.Previous
-	for _, locationArea := range locationAreas.Results {
-		fmt.Println(locationArea.Name)
+	err = json.Unmarshal(apiData, &locationArea)
+	if err != nil {
+		return locationArea, err
 	}
-	return nil
+	return locationArea, nil
 }

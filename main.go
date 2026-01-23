@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	pokecache "github/ben-smith-404/pokedexcli/internal"
+	"math/rand/v2"
 	"os"
 	"time"
 )
@@ -143,7 +144,7 @@ func commandExplore(config *Config, urlExtender string) error {
 	if urlExtender == "" {
 		return fmt.Errorf("you need to specify the location you want to explore")
 	}
-	url := baseURL + "/location-area/" + urlExtender + "/"
+	url := baseURL + "/location-area/" + urlExtender
 	locationArea, err := getLocationArea(url)
 	if err != nil {
 		return err
@@ -156,7 +157,20 @@ func commandExplore(config *Config, urlExtender string) error {
 
 func commandCatch(config *Config, urlExtender string) error {
 	if urlExtender == "" {
-		return fmt.Errorf("please specify the name of the pokemon you are trying to catch")
+		return fmt.Errorf("please include the name of the pokemon you are trying to catch")
+	}
+	url := baseURL + "/pokemon/" + urlExtender
+	pokemon, err := getPokemon(url)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Throwing a Pokeball at %v...\n", urlExtender)
+	catchChance := 4000 / pokemon.BaseExperience
+	if rand.IntN(90) < catchChance {
+		fmt.Printf("%v was caught!\n", urlExtender)
+		addToPokedex(urlExtender, pokemon)
+	} else {
+		fmt.Printf("%v escaped!\n", urlExtender)
 	}
 	return nil
 }
